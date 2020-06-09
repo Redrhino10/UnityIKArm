@@ -13,12 +13,15 @@ public class ArmManager : MonoBehaviour
         [HideInInspector]
         public GameObject ArmEnd; //The socket for the next arm
         [HideInInspector]
-        public Vector3 Socket; //The place it meets the previous arm/base
+        public Vector3 SocketPosition; //The place it meets the previous arm/base
+        [HideInInspector]
+        public Quaternion SocketRotation;  //The rotation of the previous object to inherit
     };
 
     private float Timer = 0.0f;
     
     public ArmInfo[] ArmsList = new ArmInfo[0];
+    [Tooltip("Leave this field blank to use this object as the origin/base.")]
     public GameObject BaseObject;
 
     // Start is called before the first frame update
@@ -44,10 +47,15 @@ public class ArmManager : MonoBehaviour
         {
             ArmsList[x].ArmBase = ArmsList[x].Arm.transform.Find("ArmBase").gameObject;
             ArmsList[x].ArmEnd = ArmsList[x].Arm.transform.Find("ArmEnd").gameObject;
-            if (x == 0) { ArmsList[x].Socket = BaseObject.transform.position; }
+            if (x == 0)
+            {
+                ArmsList[x].SocketPosition = BaseObject.transform.position;
+                ArmsList[x].SocketRotation = BaseObject.transform.rotation;
+            }
             else
             {
-                ArmsList[x].Socket = ArmsList[x-1].ArmEnd.transform.position;
+                ArmsList[x].SocketPosition = ArmsList[x - 1].ArmEnd.transform.position;
+                ArmsList[x].SocketRotation = ArmsList[x - 1].ArmEnd.transform.rotation;
             }
         }
 
@@ -81,27 +89,30 @@ public class ArmManager : MonoBehaviour
 
     void RotateTheArm()
     {
+        //test code
+        Quaternion InheritedRotation = new Quaternion(0,0,0,1);
+
         
-
-        for (int x = 0; x < ArmsList.Length; x++)
+        for (int i = 0; i < ArmsList.Length; i++)
         {
-            ArmInfo ArmX = ArmsList[x];
+            ArmInfo ArmData = ArmsList[i];
 
-            if(x == 0)
-            {
-                ArmX.Socket = BaseObject.transform.position;
-            }
-            else
-            {
-                ArmX.Socket = ArmsList[x - 1].ArmEnd.transform.position;
-            }
+            //set socket positions
+            if(i==0) { ArmData.SocketPosition = BaseObject.transform.position; }
+            else { ArmData.SocketPosition = ArmsList[i-1].ArmEnd.transform.position; }
 
-            ArmX.Arm.transform.rotation *= Quaternion.Euler(-5f * (x + 1), (-2f * (-2 * x)), -6f);
-            ArmX.Arm.transform.position =
-                ArmX.Arm.transform.position -
-                ArmX.ArmBase.transform.position +
-                ArmX.Socket;
+            //rotate the arm
+            Quaternion TestRotator = Quaternion.Euler(-1f, 4f, 6f);
+            InheritedRotation *= TestRotator;
+            Debug.Log("InheritedRotation of " + ArmData.Arm.name + ": "+ InheritedRotation.ToString());
 
+            ArmData.Arm.transform.rotation *= InheritedRotation;
+
+            //move the arm
+            ArmData.Arm.transform.position =
+                ArmData.Arm.transform.position -
+                ArmData.ArmBase.transform.position +
+                ArmData.SocketPosition;
         }
     }
 }
