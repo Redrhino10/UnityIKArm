@@ -24,6 +24,9 @@ public class ArmManager : MonoBehaviour
     [Tooltip("Leave this field blank to use this object as the origin/base.")]
     public GameObject BaseObject;
 
+    [Tooltip("Tracker for IK")]
+    public GameObject Tracker;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -82,7 +85,9 @@ public class ArmManager : MonoBehaviour
         Timer += Time.deltaTime;
         if (Timer >= 0.1f)
         {
-            RotateTheArm();
+            //RotateTheArm();
+            //PointAt(Tracker.transform, 2);
+            InverseRotateArm();
             Timer -= 0.1f;
         }
     }
@@ -114,5 +119,59 @@ public class ArmManager : MonoBehaviour
                 ArmData.ArmBase.transform.position +
                 ArmData.SocketPosition;
         }
+    }
+
+    void InverseRotateArm()
+    {
+        for (int i = ArmsList.Length - 1; i >= 0; i--)  //Reverse loop
+        {
+            Debug.Log("Checking int i = " + i);
+
+            if (i == ArmsList.Length - 1)   // if the final arm
+            {
+                PointAt(Tracker.transform, i);  //... then face the tracker
+            }
+            else                        // for other arms
+            {
+                PointAt(ArmsList[i + 1].ArmBase.transform, i);
+            }
+        }
+    }
+
+    void PointAt(Transform AimPosition, int ArmData)
+    {
+
+        //set socket positions
+        //NOTE! THIS WILL NOT BE USED FOR A BIT
+        if (ArmData == 0) { ArmsList[ArmData].SocketPosition = BaseObject.transform.position; }
+        else { ArmsList[ArmData].SocketPosition = ArmsList[ArmData - 1].ArmEnd.transform.position; }
+
+        //face the next object
+        ArmsList[ArmData].Arm.transform.LookAt(AimPosition);
+
+        //move the arm
+        /*
+        ArmsList[ArmData].Arm.transform.position =
+            ArmsList[ArmData].Arm.transform.position -
+            ArmsList[ArmData].ArmBase.transform.position +
+            ArmsList[ArmData].SocketPosition;
+        */
+
+        //move the arm but INVERSE!
+
+        if (ArmData == ArmsList.Length - 1) // if the final element, aim for the tracker
+        {
+            //Debug.Log(ArmsList[ArmData].Arm.name);
+            ArmsList[ArmData].Arm.transform.position -=
+               ArmsList[ArmData].ArmEnd.transform.position -
+               Tracker.transform.position; 
+        } 
+        else
+        {
+            ArmsList[ArmData].Arm.transform.position -=
+            ArmsList[ArmData].ArmEnd.transform.position -
+            ArmsList[ArmData + 1].ArmBase.transform.position;
+        }
+        
     }
 }

@@ -4,11 +4,9 @@ using UnityEngine;
 
 public class TargetMovement : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+
+    [Range(0.001f, 0.2f)]
+    public float movespeed = 0.01f;
 
     // Update is called once per frame
     void Update()

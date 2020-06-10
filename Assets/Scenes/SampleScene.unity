@@ -655,7 +655,7 @@ GameObject:
   - component: {fileID: 807644449}
   - component: {fileID: 807644448}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: Tracker
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -673,6 +673,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70b675f3b5b2cea4980f0552878b0742, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  movespeed: 0.149
 --- !u!135 &807644449
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -1001,6 +1002,7 @@ MonoBehaviour:
     SocketPosition: {x: 0, y: 0, z: 0}
     SocketRotation: {x: 0, y: 0, z: 0, w: 0}
   BaseObject: {fileID: 0}
+  Tracker: {fileID: 807644447}
 --- !u!4 &2030525998
 Transform:
   m_ObjectHideFlags: 0
