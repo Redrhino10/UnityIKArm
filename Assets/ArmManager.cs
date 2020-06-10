@@ -37,6 +37,13 @@ public class ArmManager : MonoBehaviour
             return;
         }
 
+        //debug for empty tracker
+        if (Tracker == null)
+        {
+            Debug.LogError(gameObject.name + "'s Tracker is empty?");
+            return;
+        }
+
         //set the base of the arm
         if (BaseObject == null)
         {
@@ -62,8 +69,6 @@ public class ArmManager : MonoBehaviour
             }
         }
 
-        
-
         //set initial position for first arm attached to base
         ArmsList[0].Arm.transform.position += 
             BaseObject.transform.position - 
@@ -82,14 +87,21 @@ public class ArmManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //timer to improve frame rate. probably not needed
+        /*
         Timer += Time.deltaTime;
-        if (Timer >= 0.1f)
+        if (Timer >= 0.01f)
         {
             //RotateTheArm();
             //PointAt(Tracker.transform, 2);
             InverseRotateArm();
-            Timer -= 0.1f;
+            ForwardRotateArm();
+
+            Timer -= 0.01f;
         }
+        */
+        InverseRotateArm();
+        ForwardRotateArm();
     }
 
     void RotateTheArm()
@@ -121,6 +133,25 @@ public class ArmManager : MonoBehaviour
         }
     }
 
+    void ForwardRotateArm()
+    {
+        for (int i = 0; i < ArmsList.Length; i++)
+        {
+            //ArmData value used to shorten code
+            ArmInfo ArmData = ArmsList[i];
+
+            //set socket positions
+            if (i == 0) { ArmData.SocketPosition = BaseObject.transform.position; }
+            else { ArmData.SocketPosition = ArmsList[i - 1].ArmEnd.transform.position; }
+
+            //move back to sockets without rotation
+            ArmData.Arm.transform.position =
+            ArmData.Arm.transform.position -
+            ArmData.ArmBase.transform.position +
+            ArmData.SocketPosition;
+        }
+    }
+
     void InverseRotateArm()
     {
         for (int i = ArmsList.Length - 1; i >= 0; i--)  //Reverse loop
@@ -140,22 +171,15 @@ public class ArmManager : MonoBehaviour
 
     void PointAt(Transform AimPosition, int ArmData)
     {
-
-        //set socket positions
-        //NOTE! THIS WILL NOT BE USED FOR A BIT
-        if (ArmData == 0) { ArmsList[ArmData].SocketPosition = BaseObject.transform.position; }
-        else { ArmsList[ArmData].SocketPosition = ArmsList[ArmData - 1].ArmEnd.transform.position; }
-
         //face the next object
-        ArmsList[ArmData].Arm.transform.LookAt(AimPosition);
+        //NOTE* commented out since this is the main solution, but doesnt work well
+        //ArmsList[ArmData].Arm.transform.LookAt(AimPosition);
 
-        //move the arm
-        /*
-        ArmsList[ArmData].Arm.transform.position =
-            ArmsList[ArmData].Arm.transform.position -
-            ArmsList[ArmData].ArmBase.transform.position +
-            ArmsList[ArmData].SocketPosition;
-        */
+        //NOTE* this code below works MUCH better, but may need tinkering!
+        //test to move to midpoint of current and target position
+        Vector3 target = ArmsList[ArmData].ArmEnd.transform.position;
+        target += (AimPosition.transform.position - target) / 2;
+        ArmsList[ArmData].Arm.transform.LookAt(target);
 
         //move the arm but INVERSE!
 

@@ -8,10 +8,44 @@ public class TargetMovement : MonoBehaviour
     [Range(0.001f, 0.2f)]
     public float movespeed = 0.01f;
 
+    [Header("Target colour change")]
+    public Material InContact;
+    public Material NoContact;
+    public GameObject ArmEnd;
+    private float TargetRadius;
+
+    void Start()
+    {
+        if (ArmEnd == null)
+        {
+            Debug.Log("No ArmEnd set on " + gameObject);
+            return;
+        }
+        else
+        {
+            TargetRadius = gameObject.GetComponent<Transform>().lossyScale.x;
+            Debug.Log("Radius = " + TargetRadius);
+        }
+    }
+
     // Update is called once per frame
     void Update()
     {
         CheckInputs();
+        ChangeMaterial();
+    }
+
+    void ChangeMaterial()
+    {
+        if(Vector3.Distance(gameObject.transform.position, 
+            ArmEnd.transform.position) < TargetRadius)
+        {
+            gameObject.GetComponent<Renderer>().material = InContact;
+        }
+        else
+        {
+            gameObject.GetComponent<Renderer>().material = NoContact;
+        }
     }
 
     // Check Q,W,E,A,S,D keys for movement
