@@ -18,7 +18,7 @@ public class ArmManager : MonoBehaviour
         //public Quaternion SocketRotation;  //The rotation of the previous object to inherit
     };
 
-    private float Timer = 0.0f;
+    //private float Timer = 0.0f;
     
     public ArmInfo[] ArmsList = new ArmInfo[0];
     [Tooltip("Leave this field blank to use this object as the origin/base.")]
@@ -178,6 +178,7 @@ public class ArmManager : MonoBehaviour
         }
     }
 
+    //Try 1
     void PointAt(Transform AimPosition, int ArmData, GameObject AimObject)
     {
         //face the next object
@@ -245,6 +246,7 @@ public class ArmManager : MonoBehaviour
         
     }
 
+    //Try 2
     void PointTowards(ArmInfo CurrentArmInfo, GameObject NextBase, GameObject PreviousObject) //A new refined method for PointAt, which uses Euler angles instead to limit degrees of motion
     {
         //Debug lines
@@ -294,6 +296,7 @@ public class ArmManager : MonoBehaviour
         NextBase.transform.position;
     }
 
+    //The one that works
     void PointAtNew(ArmInfo CurrentArmInfo, GameObject NextBase, GameObject NextArm, GameObject PreviousObject) //RETRY
     {
         
