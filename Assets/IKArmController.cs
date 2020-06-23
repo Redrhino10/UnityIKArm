@@ -24,9 +24,13 @@ public class IKArmController : MonoBehaviour
     public GameObject Target;
     public GameObject BaseObject;
 
+    [Range(1, 20)]
+    public int RotationClamp = 5;
+
     public bool bDrawDebugLines;
     public bool bInheritRotations = false;
     public bool bRotateBase = false;
+    private int frame = 0;
 
     void Start()
     {
@@ -76,10 +80,22 @@ public class IKArmController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        /*
+        frame++;
+        if(frame % 2 != 0) // if not multiple of 2
+        {
+            if (bRotateBase) { RotateBase(); }
+            if (bInheritRotations) { InheritRotations(); }
+            InverseArmRotation();
+        }
+        else { ForwardArmRotation(); }
+        */
+        
         if (bRotateBase) { RotateBase(); }
         if (bInheritRotations) { InheritRotations(); }
         InverseArmRotation();
         ForwardArmRotation();
+
     }
 
     private void RotateBase()
@@ -99,7 +115,7 @@ public class IKArmController : MonoBehaviour
         BaseObject.transform.Rotate(0, 1, 0);
 
         //Vector3 ProjectedPoint = ProjectOntoPlane(Arm, ArmBase);
-        Vector3 ProjectedPoint = ProjectOntoPlane(ArmsList[0].ArmObject, ArmsList[0].ArmBase, Target);
+        Vector3 ProjectedPoint = ProjectOntoPlane(ArmsList[0].ArmObject, ArmsList[0].ArmBase, ArmsList[0].ArmParent, Target);
 
         Transform r = ArmsList[0].ArmBase.transform;
 
@@ -122,8 +138,11 @@ public class IKArmController : MonoBehaviour
             else
             {
                 ArmsList[i].ArmParent.transform.rotation = ArmsList[i - 1].ArmObject.transform.rotation;
+
+                //TODO - This is a temp fix
+                ArmsList[i].ArmParent.transform.rotation *= Quaternion.Euler(0, 90, 0);
             }
-            
+
         }
     }
 
@@ -134,8 +153,6 @@ public class IKArmController : MonoBehaviour
             if (i == ArmsList.Length - 1)   // if the final arm
             {
                 PointAt(i, Target);
-
-                //could be here??
                 
                 ArmsList[i].ArmObject.transform.position -=
                 ArmsList[i].ArmEnd.transform.position -
@@ -173,32 +190,38 @@ public class IKArmController : MonoBehaviour
 
     public void PointAt(int x, GameObject TargetObject)
     {
-
-        //Rotate to match base
-        //WARNING BELOW LINE DOESNT WROK!
-        //ArmsList[x].ArmParent.transform.rotation = ArmsList[x].ArmSocket.transform.rotation;
-
         //Get the aim position for the next frame
-        Vector3 ProjectedPoint = ProjectOntoPlane(ArmsList[x].ArmObject, ArmsList[x].ArmBase, TargetObject);
+        Vector3 ProjectedPoint = ProjectOntoPlane(ArmsList[x].ArmObject, ArmsList[x].ArmBase, ArmsList[x].ArmParent, TargetObject);
+
+        //NEW allign the arm with armparent
+        //ArmsList[x].ArmObject.transform.rotation = ArmsList[x].ArmParent.transform.rotation;
 
         //Rotate to the aim position
         Transform r = ArmsList[x].ArmBase.transform;    //TODO
         float SignAngle = Vector3.SignedAngle(r.up, ProjectedPoint - r.position, r.forward);
 
-        ArmsList[x].ArmObject.transform.Rotate(0, 0, SignAngle);
+        SignAngle = Mathf.Clamp(SignAngle, -RotationClamp, RotationClamp);
+
+        ArmsList[x].ArmObject.transform.Rotate(0, 0, SignAngle/2);
 
         //Move to the next position
         //ArmsList[0].ArmObject.transform.position -= BaseObject.transform.position + ArmsList[0].ArmBase.transform.position;
         //ArmsList[0].ArmObject.transform.position -= BaseObject.transform.position + ArmsList[0].ArmBase.transform.position;
     }
 
-    public Vector3 ProjectOntoPlane(GameObject ArmObject, GameObject ArmBase, GameObject ArmTarget)
+    public Vector3 ProjectOntoPlane(GameObject ArmObject, GameObject ArmBase, GameObject ArmParent, GameObject ArmTarget)
     {
         Transform r = ArmBase.transform;                //TODO
+        /*
         Plane p = new Plane(
             r.position,
             r.position + ArmObject.transform.up,
             r.position + ArmObject.transform.right);
+        */
+        Plane p = new Plane(
+            r.position,
+            r.position + ArmParent.transform.up,
+            r.position + ArmParent.transform.right);
         
         //normal is cross product of Arm.transform.up and Arm.transform.right
         Vector3 TargetToOrigin = ArmTarget.transform.position - r.position;
