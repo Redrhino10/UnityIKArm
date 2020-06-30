@@ -16,6 +16,8 @@ public class IKArmController : MonoBehaviour
         [HideInInspector]
         public GameObject ArmEnd; //The end of the arm; the next arms socket usually
         [HideInInspector]
+        public GameObject ArmCylinder; //The base of each arm has a cylinder
+        [HideInInspector]
         public GameObject ArmSocket; //The place it meets the previous arm/base
     };
 
@@ -23,13 +25,19 @@ public class IKArmController : MonoBehaviour
 
     public GameObject Target;
     public GameObject BaseObject;
+    public Material MainMaterial;
+    public Material MaxRotationMaterial;
 
     [Range(1, 20)]
     public int RotationClamp = 5;
 
+    [Range(1, 360)]
+    public int RotationMax = 90;
+
     public bool bDrawDebugLines;
     public bool bInheritRotations = false;
     public bool bRotateBase = false;
+    
     private int frame = 0;
 
     void Start()
@@ -62,15 +70,17 @@ public class IKArmController : MonoBehaviour
             ArmsList[x].ArmObject = ArmsList[x].ArmParent.transform.Find("Arm").gameObject;
             ArmsList[x].ArmBase = ArmsList[x].ArmObject.transform.Find("ArmBase").gameObject;
             ArmsList[x].ArmEnd = ArmsList[x].ArmObject.transform.Find("ArmEnd").gameObject;
-
+            
 
             if (x == 0)  //if the first arm in the array, set the base object as the socket.            
             {
                 ArmsList[x].ArmSocket = BaseObject;
+                ArmsList[x].ArmCylinder = BaseObject.transform.Find("Cylinder").gameObject;
             }
             else //For other arms, set the socket to the previous base
             {
                 ArmsList[x].ArmSocket = ArmsList[x - 1].ArmEnd;
+                ArmsList[x].ArmCylinder = ArmsList[x - 1].ArmEnd.transform.Find("Cylinder").gameObject;
             }
 
             Debug.Log("Arm " + ArmsList[x].ArmParent + "'s socket is " + ArmsList[x].ArmSocket);
@@ -93,9 +103,18 @@ public class IKArmController : MonoBehaviour
         
         if (bRotateBase) { RotateBase(); }
         if (bInheritRotations) { InheritRotations(); }
-        InverseArmRotation();
-        ForwardArmRotation();
 
+        //New condition - check if arm is already at destination
+        float EndEffectorDistance = Vector3.Distance(
+            Target.transform.position, 
+            ArmsList[ArmsList.Length - 1].ArmEnd.transform.position);
+
+        if (EndEffectorDistance > 0.05)
+        {
+            Debug.Log("Distance = " + EndEffectorDistance);
+            InverseArmRotation();
+            ForwardArmRotation();
+        }    
     }
 
     private void RotateBase()
@@ -202,7 +221,67 @@ public class IKArmController : MonoBehaviour
 
         SignAngle = Mathf.Clamp(SignAngle, -RotationClamp, RotationClamp);
 
-        ArmsList[x].ArmObject.transform.Rotate(0, 0, SignAngle/2);
+        //Restrict the rotation to the RotationMax value
+        float CurrentAngle;
+        float FutureAngle;
+        if (x == 0)
+        {
+            FutureAngle = Vector3.SignedAngle(
+            BaseObject.transform.up,
+            TargetObject.transform.position - r.position,
+            r.forward);
+
+            CurrentAngle = Vector3.SignedAngle(
+            BaseObject.transform.up,
+            ArmsList[x].ArmObject.transform.up,
+            r.forward);
+
+        }
+        else
+        {
+            FutureAngle = Vector3.SignedAngle(
+            ArmsList[x - 1].ArmObject.transform.up,
+            TargetObject.transform.position - r.position,
+            r.forward);
+
+            CurrentAngle = Vector3.SignedAngle(
+            ArmsList[x - 1].ArmObject.transform.up,
+            ArmsList[x].ArmObject.transform.up,
+            r.forward);
+        }
+
+        if(Mathf.Abs(CurrentAngle + SignAngle) < RotationMax)
+        {
+            ArmsList[x].ArmObject.transform.Rotate(0, 0, SignAngle / 2);
+            ArmsList[x].ArmCylinder.GetComponent<Renderer>().material = MainMaterial;
+        }
+
+        
+        else
+        {
+            ArmsList[x].ArmCylinder.GetComponent<Renderer>().material = MaxRotationMaterial;
+
+            if (FutureAngle >= 0)
+            {
+                float X = Mathf.Min(Mathf.Abs(RotationMax + CurrentAngle), Mathf.Abs(RotationMax - CurrentAngle));
+
+                ArmsList[x].ArmObject.transform.Rotate(0, 0, X/2);
+                Debug.Log("Arm " + ArmsList[x].ArmParent.name + " has positive Max, " +
+                    "Angle = " + (X));
+            }
+            else
+            {
+                float Y = Mathf.Min(Mathf.Abs(RotationMax + CurrentAngle), Mathf.Abs(RotationMax - CurrentAngle));
+
+                ArmsList[x].ArmObject.transform.Rotate(0, 0, Y/2);
+                Debug.Log("Arm " + ArmsList[x].ArmParent.name + " has negative Max, " +
+                    "Angle = " + (Y));
+
+            }
+
+        }
+        
+        
 
         //Move to the next position
         //ArmsList[0].ArmObject.transform.position -= BaseObject.transform.position + ArmsList[0].ArmBase.transform.position;

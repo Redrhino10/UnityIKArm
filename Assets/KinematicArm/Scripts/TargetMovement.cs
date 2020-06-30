@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,6 +8,9 @@ public class TargetMovement : MonoBehaviour
 
     [Range(0.001f, 0.2f)]
     public float movespeed = 0.01f;
+    [Header("Random Movement")]
+    public bool bAutoMove = false;
+    private Transform targetorigin;
 
     [Header("Target colour change")]
     public Material InContact;
@@ -26,6 +30,8 @@ public class TargetMovement : MonoBehaviour
             TargetRadius = gameObject.GetComponent<Transform>().lossyScale.x;
             Debug.Log("Radius = " + TargetRadius);
         }
+
+        targetorigin = gameObject.transform;
     }
 
     // Update is called once per frame
@@ -33,6 +39,12 @@ public class TargetMovement : MonoBehaviour
     {
         CheckInputs();
         ChangeMaterial();
+        if(bAutoMove) { RandomMovement(); }
+    }
+
+    void RandomMovement()
+    {
+        
     }
 
     void ChangeMaterial()
